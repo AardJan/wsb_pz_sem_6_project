@@ -1,13 +1,15 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule
+    FormsModule,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
@@ -19,11 +21,14 @@ export class LoginComponent {
     };
   loginError: boolean = false;
 
+  constructor(private authService: AuthService, private router: Router) {}
+
   login() {
 
-    if (this.formData.username === 'przykladowyUzytkownik' && this.formData.password === 'przykladoweHaslo') {
+    if (this.authService.login(this.formData.username, this.formData.password)) {
       console.log('Zalogowano pomyślnie');
-      this.loginError = false;
+      this.router.navigate(['/dashboard']);
+
     } else {
       console.log('Błąd logowania. Sprawdź dane.');
       this.loginError = true;
