@@ -1,0 +1,24 @@
+[project]
+name = "pz_backend"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "AardJan", email = "43217550+AardJan@users.noreply.github.com"},
+]
+dependencies = [
+    "django>=5.0.6",
+    "djangorestframework>=3.15.1",
+    "django-cors-headers>=4.3.1",
+]
+requires-python = "==3.12.*"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "black>=24.4.2",
+]
