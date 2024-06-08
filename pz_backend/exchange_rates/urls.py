@@ -5,6 +5,7 @@ from .views import (
     ExchangeRateYearView,
     ExchangeRateMonthView,
     ExchangeRateDayView,
+    FetchExchangeRatesView,
 )
 
 urlpatterns = [
@@ -32,5 +33,15 @@ urlpatterns = [
         "exchange-rates/<str:currency_code>/year/<int:year>/month/<int:month>/day/<int:day>/",
         ExchangeRateDayView.as_view(),
         name="exchange-rate-day",
+    ),
+    path(
+        "exchange-rates-fetch/",
+        FetchExchangeRatesView.as_view(),
+        name="fetch-exchange-rates",
+    ),
+    path(
+        "exchange-rates-fetch/<str:currency_code>/",
+        FetchExchangeRatesView.as_view(),
+        name="fetch-exchange-rates-by-currency",
     ),
 ]
