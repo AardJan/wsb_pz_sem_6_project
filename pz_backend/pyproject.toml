@@ -11,6 +11,7 @@ dependencies = [
     "django-cors-headers>=4.3.1",
     "django-filter>=24.2",
     "requests>=2.32.3",
+    "holidays>=0.50",
 ]
 requires-python = "==3.12.*"
 readme = "README.md"
