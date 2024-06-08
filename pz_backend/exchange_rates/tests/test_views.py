@@ -11,6 +11,7 @@ User = get_user_model()
 
 class ExchangeRateTests(APITestCase):
     def setUp(self):
+        # Tworzenie przykładowych danych
         today = date.today()
         for i in range(10):
             ExchangeRate.objects.create(
@@ -20,6 +21,7 @@ class ExchangeRateTests(APITestCase):
                 rate=3.75 + i * 0.01,
             )
 
+        # Tworzenie użytkownika
         self.user = User.objects.create_user(
             username="testuser", password="testpassword"
         )
@@ -77,23 +79,35 @@ class ExchangeRateTests(APITestCase):
         mock_get.return_value.json.return_value = [
             {
                 "table": "A",
-                "no": "110/A/NBP/2024",
-                "effectiveDate": "2024-06-07",
+                "currency": "dolar amerykański",
+                "code": "USD",
                 "rates": [
-                    {"currency": "bat (Tajlandia)", "code": "THB", "mid": 0.1080},
-                    {"currency": "dolar amerykański", "code": "USD", "mid": 3.9389},
+                    {
+                        "no": "043/A/NBP/2022",
+                        "effectiveDate": "2022-03-03",
+                        "mid": 4.3257,
+                    }
                 ],
             }
         ]
 
-        url = reverse("fetch-exchange-rates")
-        response = self.client.get(url)
+        url = reverse("fetch-exchange-rates-by-currency", args=["USD"])
+        response = self.client.get(
+            url, {"start_date": "2022-03-03", "end_date": "2022-03-03"}
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
-        self.assertEqual(response.data[0]["currency"], "THB")
-        self.assertEqual(response.data[0]["name"], "bat (Tajlandia)")
-        self.assertEqual(response.data[1]["currency"], "USD")
-        self.assertEqual(response.data[1]["name"], "dolar amerykański")
+
+        self.assertTrue(
+            ExchangeRate.objects.filter(
+                currency="USD", exchange_date="2022-03-03"
+            ).exists()
+        )
+
+        response_data = response.json()
+        self.assertEqual(len(response_data), 1)
+        self.assertEqual(response_data[0]["currency"], "USD")
+        self.assertEqual(response_data[0]["name"], "dolar amerykański")
+        self.assertEqual(response_data[0]["rate"], 4.3257)
 
     def test_fetch_exchange_rates_real(self):
         url = reverse("fetch-exchange-rates")

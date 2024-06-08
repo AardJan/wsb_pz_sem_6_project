@@ -4,6 +4,7 @@ from rest_framework.generics import ListAPIView
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+import holidays
 
 from .models import ExchangeRate
 from .serializers import ExchangeRateSerializer
@@ -79,9 +80,45 @@ class FetchExchangeRatesView(APIView):
         start_date = request.query_params.get("start_date", None)
         end_date = request.query_params.get("end_date", None)
 
+        if not start_date:
+            start_date = (date.today() - timedelta(days=90)).strftime("%Y-%m-%d")
+        if not end_date:
+            end_date = date.today().strftime("%Y-%m-%d")
+
+        pol_holidays = holidays.Poland()
+        start_date = self.adjust_date(start_date, pol_holidays)
+        end_date = self.adjust_date(end_date, pol_holidays)
+
+        if currency:
+            existing_data = ExchangeRate.objects.filter(
+                currency=currency, exchange_date__range=[start_date, end_date]
+            )
+        else:
+            existing_data = ExchangeRate.objects.filter(
+                exchange_date__range=[start_date, end_date]
+            )
+
+        if existing_data.exists():
+            serializer = ExchangeRateSerializer(existing_data, many=True)
+            return Response(serializer.data)
+
         nbp_api = NBPAPI()
         data = nbp_api.fetch_data(
             start_date=start_date, end_date=end_date, currency_code=currency
         )
 
+        for rate_info in data:
+            ExchangeRate.objects.get_or_create(
+                currency=rate_info["currency"],
+                name=rate_info["name"],
+                exchange_date=rate_info["exchange_date"],
+                rate=rate_info["rate"],
+            )
+
         return Response(data)
+
+    def adjust_date(self, input_date, _holidays):
+        exchange_date_obj = date.fromisoformat(input_date)
+        while exchange_date_obj.weekday() > 4 or exchange_date_obj in _holidays:
+            exchange_date_obj -= timedelta(days=1)
+        return exchange_date_obj.strftime("%Y-%m-%d")
