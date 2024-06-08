@@ -76,3 +76,34 @@ class UserCreateViewTest(APITestCase):
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("password_confirm", response.data)
+
+
+class CustomAuthTokenTests(APITestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="testuser", password="testpassword"
+        )
+        self.login_url = reverse("user-login")
+
+    def test_login_with_valid_credentials(self):
+        response = self.client.post(
+            self.login_url, {"username": "testuser", "password": "testpassword"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("token", response.data)
+        self.assertEqual(response.data["user_id"], self.user.id)
+        self.assertEqual(response.data["username"], "testuser")
+
+    def test_login_with_invalid_credentials(self):
+        response = self.client.post(
+            self.login_url, {"username": "testuser", "password": "wrongpassword"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertNotIn("token", response.data)
+
+    def test_login_with_nonexistent_user(self):
+        response = self.client.post(
+            self.login_url, {"username": "nonexistent", "password": "testpassword"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertNotIn("token", response.data)
