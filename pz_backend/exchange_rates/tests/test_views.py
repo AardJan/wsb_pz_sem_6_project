@@ -11,7 +11,6 @@ User = get_user_model()
 
 class ExchangeRateTests(APITestCase):
     def setUp(self):
-        # Tworzenie przykładowych danych
         today = date.today()
         for i in range(10):
             ExchangeRate.objects.create(
@@ -21,7 +20,6 @@ class ExchangeRateTests(APITestCase):
                 rate=3.75 + i * 0.01,
             )
 
-        # Tworzenie użytkownika
         self.user = User.objects.create_user(
             username="testuser", password="testpassword"
         )
