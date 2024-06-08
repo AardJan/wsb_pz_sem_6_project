@@ -1,8 +1,8 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from rest_framework import status
-from rest_framework.exceptions import ValidationError
-from rest_framework.test import APITestCase
+from rest_framework.authtoken.models import Token
+from rest_framework.test import APITestCase, APIClient
 from django.urls import reverse
 
 from .serializers import UserSerializer
@@ -107,3 +107,35 @@ class CustomAuthTokenTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertNotIn("token", response.data)
+
+
+class UserLogoutViewTests(APITestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", password="testpassword"
+        )
+        self.token, _ = Token.objects.get_or_create(user=self.user)
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token.key)
+        self.logout_url = reverse("user-logout")
+
+    def test_logout_success(self):
+        response = self.client.post(self.logout_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {"success": "Logged out successfully."})
+        self.assertFalse(Token.objects.filter(user=self.user).exists())
+
+    def test_logout_without_token(self):
+        self.client.credentials()
+        response = self.client.post(self.logout_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data, {"detail": "Authentication credentials were not provided."}
+        )
+
+    def test_logout_with_invalid_token(self):
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + "invalidtoken")
+        response = self.client.post(self.logout_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data, {"detail": "Invalid token."})

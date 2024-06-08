@@ -1,9 +1,10 @@
 from rest_framework import generics
 from django.contrib.auth import get_user_model
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .serializers import UserSerializer
 
@@ -27,3 +28,15 @@ class CustomAuthToken(ObtainAuthToken):
         return Response(
             {"token": token.key, "user_id": user.pk, "username": user.username}
         )
+
+
+class UserLogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            token = Token.objects.get(user=request.user)
+            token.delete()
+            return Response({"success": "Logged out successfully."}, status=200)
+        except Token.DoesNotExist:
+            return Response({"error": "Token not found."}, status=400)
