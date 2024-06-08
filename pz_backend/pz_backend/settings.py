@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "users",
     "exchange_rates",
+    "django_filters",
 ]
 
 MIDDLEWARE = [
